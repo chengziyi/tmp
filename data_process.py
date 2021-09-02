@@ -3,9 +3,13 @@ import pickle
 import re
 import copy
 import time
+import argparse
 from tqdm import tqdm
 
 def process_type_list(list_path = './type_list.txt'):
+    '''
+    取所有字母和数字，然后保留 字母+数字 的组合
+    '''
     with open(list_path, 'r') as f:
         type_list=f.readlines()
     # print(type_list)
@@ -27,6 +31,9 @@ def process_type_list(list_path = './type_list.txt'):
             f.writelines(r+'\n')
 
 def process_brand_list(list_path = './brand_list.txt'):
+    '''
+    中英文分开 尼康(Nikon)->尼康, Nikon
+    '''
     with open(list_path, 'r') as f:
         brand_list_tmp=f.readlines()
     brand_list_tmp = list(map(lambda x:x.strip('\n'), brand_list_tmp))
@@ -104,18 +111,37 @@ def label_all_data(data_dir):
 
     return label_res
 
+def data_sort(file_path):
+    '''
+    对所有条目，按字符串长度从短到长排序，先匹配短条目再匹配长条目，解决包含关系匹配出错问题，如M1, M1-L213B
+    '''
+    with open(file_path, 'r') as f:
+        data_list = f.readlines()
+
+    res=sorted(data_list, key=lambda x:len(x))
+    with open(file_path,'w') as f:
+        f.writelines(res)
+
 if __name__ == "__main__":
     # process_type_list()
     # process_brand_list()
+    # data_sort('./brand_list.txt')
+    # data_sort('./category_list.txt')
+    # data_sort('./type_list.txt')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir',default=None)
+    data_dir = parser.parse_args().data_dir
+    if data_dir is None:
+        print('input data dir')
+        quit()
 
     t1=time.time()
     res = []
-    data_dir = './asr_result'
     for dir_name in tqdm(os.listdir(data_dir)):
         dir_path = os.path.join(data_dir, dir_name)
         tmp_res = label_all_data(dir_path)
         res.extend(tmp_res)
-
     print(f'data len:{len(res)}, use time:{time.time()-t1}')
 
     final_res = []
